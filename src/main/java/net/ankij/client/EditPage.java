@@ -6,7 +6,9 @@ import static org.apache.http.HttpStatus.SC_OK;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -16,6 +18,11 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.message.BasicHeader;
+
+import com.fasterxml.jackson.jr.ob.JSON;
+import com.fasterxml.jackson.jr.stree.JacksonJrsTreeCodec;
+
+import net.ankij.type.CardModel;
 
 final class EditPage {
 
@@ -29,6 +36,8 @@ final class EditPage {
 			.compile("\\{[^\\{]*?\"name\": \"English -> German\"[^\\}]+?\"mid\": \"(\\d*?)\"[^\\}]*?\\}");
 	private static final Pattern EDIT_MID_PATTERN_END = Pattern
 			.compile("\\{[^\\{]*?\"mid\": \"(\\d*?)\"[^\\}]+?\"name\": \"English -> German\"[^\\}]*?\\}");
+
+	private static final Pattern CARD_MODELS = Pattern.compile("editor.models = (.*);");
 
 	private final AnkiHttpClient httpClient;
 	private final PageValue pageValue;
@@ -56,6 +65,10 @@ final class EditPage {
 		String csrfToken = pageValue.extractFrom(editPage, CSRF_TOKEN)
 				.orElseThrow(() -> new IOException("No CSRF token found"));
 
+		String cardModelsJson = pageValue.extractFrom(editPage, CARD_MODELS).orElseThrow(NoSuchElementException::new);
+		EditPageParser parser = new EditPageParser(JSON.std.with(new JacksonJrsTreeCodec()));
+
+		Collection<CardModel> cardModels = parser.parseCardModels(cardModelsJson);
 	}
 
 	private void postEntry(String word, String meaning, String example, String pronunciation, String translation,
