@@ -13,16 +13,16 @@ public final class AddEntryRequest {
 
 	private final String deck;
 	private final String type;
-	private final Map<String, Value> map;
+	private final Map<String, Value> fieldMap;
 
-	public static Builder create(String deck, String type) {
+	public static Builder builder(String deck, String type) {
 		return new Builder(deck, type);
 	}
 
 	private AddEntryRequest(String deck, String type, Map<String, Value> map) {
 		this.deck = deck;
 		this.type = type;
-		this.map = unmodifiableMap(new HashMap<>(map));
+		this.fieldMap = unmodifiableMap(new HashMap<>(map));
 	}
 
 	public String getDeck() {
@@ -33,8 +33,8 @@ public final class AddEntryRequest {
 		return type;
 	}
 
-	public Map<String, Value> getMap() {
-		return map;
+	public Map<String, Value> getFieldMap() {
+		return fieldMap;
 	}
 
 	public static final class Builder {
@@ -49,12 +49,14 @@ public final class AddEntryRequest {
 			this.map = new HashMap<>(8);
 		}
 
-		public void add(String key, String value) {
+		public Builder add(String key, String value) {
 			map.put(key, new StringValue(value));
+			return this;
 		}
 
-		public void add(String key, Number value) {
+		public Builder add(String key, Number value) {
 			map.put(key, new StringValue(value));
+			return this;
 		}
 
 		public AddEntryRequest build() {

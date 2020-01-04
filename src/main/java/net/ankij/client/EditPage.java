@@ -1,17 +1,15 @@
 package net.ankij.client;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static net.ankij.client.Util.escapeForAnki;
+import static java.util.Arrays.asList;
 import static org.apache.http.HttpStatus.SC_OK;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.logging.Logger;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
@@ -23,21 +21,18 @@ import com.fasterxml.jackson.jr.ob.JSON;
 import com.fasterxml.jackson.jr.stree.JacksonJrsTreeCodec;
 
 import net.ankij.type.CardModel;
+import net.ankij.type.CardModels;
+import net.ankij.type.Deck;
+import net.ankij.type.Decks;
+import net.ankij.type.StringValue;
+import net.ankij.type.Value;
 
 final class EditPage {
 
-	private static final Logger log = Logger.getLogger(EditPage.class.getName());
-
 	private static final String EDIT_PAGE_URL = "https://ankiuser.net/edit/";
 	private static final Pattern CSRF_TOKEN = Pattern.compile("editor.csrf_token2 = '(.*?)'");
-
-	// we could use also just one regex with an OR condition or an JSON parser..
-	private static final Pattern EDIT_MID_PATTERN = Pattern
-			.compile("\\{[^\\{]*?\"name\": \"English -> German\"[^\\}]+?\"mid\": \"(\\d*?)\"[^\\}]*?\\}");
-	private static final Pattern EDIT_MID_PATTERN_END = Pattern
-			.compile("\\{[^\\{]*?\"mid\": \"(\\d*?)\"[^\\}]+?\"name\": \"English -> German\"[^\\}]*?\\}");
-
 	private static final Pattern CARD_MODELS = Pattern.compile("editor.models = (.*);");
+	private static final Pattern DECKS = Pattern.compile("editor.decks = (.*);");
 
 	private final AnkiHttpClient httpClient;
 	private final PageValue pageValue;
@@ -47,66 +42,45 @@ final class EditPage {
 		this.pageValue = pageValue;
 	}
 
-	void addEntry(String word, String meaning, String example, String pronunciation, String translation)
-			throws IOException {
-		String editPage = httpClient.get(EDIT_PAGE_URL).response;
-		String csrfToken = pageValue.extractFrom(editPage, CSRF_TOKEN)
-				.orElseThrow(() -> new IOException("No CSRF token found"));
-		Optional<String> mid = pageValue.extractFrom(editPage, EDIT_MID_PATTERN);
-		if (!mid.isPresent()) {
-			mid = pageValue.extractFrom(editPage, EDIT_MID_PATTERN_END);
-		}
-		String midValue = mid.orElseThrow(() -> new IOException("Failed to find mid token on page:\n" + editPage));
-		postEntry(word, meaning, example, pronunciation, translation, editPage, csrfToken, midValue);
-	}
-
 	void add(AddEntryRequest request) throws ClientProtocolException, IOException {
 		String editPage = httpClient.get(EDIT_PAGE_URL).response;
 		String csrfToken = pageValue.extractFrom(editPage, CSRF_TOKEN)
 				.orElseThrow(() -> new IOException("No CSRF token found"));
 
-		String cardModelsJson = pageValue.extractFrom(editPage, CARD_MODELS).orElseThrow(NoSuchElementException::new);
+		String cardModelsJson = pageValue.extractFrom(editPage, CARD_MODELS).get();
 		EditPageParser parser = new EditPageParser(JSON.std.with(new JacksonJrsTreeCodec()));
+		CardModels cardModels = parser.parseCardModels(cardModelsJson);
+		CardModel cardModel = cardModels.get(request.getType())
+				.orElseThrow(() -> new NoSuchElementException("No such card type: " + request.getType()));
+		String payload = createPayload(request, cardModel);
 
-		Collection<CardModel> cardModels = parser.parseCardModels(cardModelsJson);
-	}
+		String decksJson = pageValue.extractFrom(editPage, DECKS).get();
+		Decks decks = parser.parseDecks(decksJson);
+		Deck deck = decks.get(request.getDeck())
+				.orElseThrow(() -> new NoSuchElementException("No such deck: " + request.getDeck()));
 
-	private void postEntry(String word, String meaning, String example, String pronunciation, String translation,
-			String editPage, String csrf, String mid) throws ClientProtocolException, IOException {
-		String value = "[[\"" + format(word) + "\",\"" + format(meaning) + "\",\"" + format(pronunciation) + "\",\""
-				+ format(example) + "\",\"" + format(translation) + "\"],\"\"]";
-		log.fine("Sending following request\ncsrf_token: " + csrf + "\nmid: " + mid + "\ndata: " + value);
-
-		List<NameValuePair> body = Form.form().add("csrf_token", csrf).add("mid", mid).add("deck", "German -> English")
-				.add("data", value).build();
-
+		List<NameValuePair> body = Form.form().add("csrf_token", csrfToken).add("mid", deck.getMid())
+				.add("deck", deck.getName()).add("data", payload).build();
 		HttpResponse response = httpClient.post(EDIT_PAGE_URL,
-				Arrays.asList(
-						new BasicHeader("Content-Type",
-								ContentType.create("application/x-www-form-urlencoded", UTF_8).toString()),
+				asList(new BasicHeader("Content-Type",
+						ContentType.create("application/x-www-form-urlencoded", UTF_8).toString()),
 						new BasicHeader("X-Requested-With", "XMLHttpRequest")),
 				new UrlEncodedFormEntity(body));
 		if (response.statusCode != SC_OK) {
-			throw new IOException(
-					"Failed to add " + word + "! Got status: " + response.statusCode + "\n\n Edit Page:\n" + editPage);
+			throw new IOException("Failed to add " + request + "! Got status: " + response.statusCode
+					+ "\n\n Edit Page:\n" + editPage);
 		}
 	}
 
-	private String format(String string) {
-		if (string.isEmpty()) {
-			return "";
+	String createPayload(AddEntryRequest request, CardModel cardModel) {
+		List<String> fields = cardModel.getFields();
+		HashMap<String, Value> fieldMap = new HashMap<>(request.getFieldMap());
+		String fieldPayload = fields.stream().map(fieldMap::remove).map(val -> val == null ? StringValue.EMPTY : val)
+				.map(Value::formatForWeb).collect(Collectors.joining("\",\""));
+		if (!fieldMap.isEmpty()) {
+			throw new IllegalArgumentException("The field(s) " + fieldMap.keySet() + " cannot be mapped for card type "
+					+ request.getType() + ". The available fields are " + cardModel.getFields());
 		}
-		String[] parts = string.split("\n");
-		if (parts.length == 1) {
-			return escapeForAnki(string);
-		}
-		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < parts.length; i++) {
-			if (i > 0) {
-				sb.append("<br>");
-			}
-			sb.append("<div>").append(escapeForAnki(parts[i])).append("</div>");
-		}
-		return sb.toString();
+		return "[[\"" + fieldPayload + "\"],\"\"]";
 	}
 }
