@@ -19,6 +19,18 @@ public final class Util {
 		return out.toString();
 	}
 
+	public static String escapeUsingUnicode(String input) {
+		StringBuilder out = new StringBuilder(input.length());
+		for (char character : input.toCharArray()) {
+			if (character >= 128) {
+				out.append("\\u").append(String.format("%04X", (int) character));
+			} else {
+				out.append(character);
+			}
+		}
+		return out.toString();
+	}
+
 	private Util() {
 		// not for initialization
 	}

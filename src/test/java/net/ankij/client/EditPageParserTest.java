@@ -45,7 +45,8 @@ public class EditPageParserTest {
 		CardModel card = new EditPageParser(JSON.std.with(new JacksonJrsTreeCodec())).parseCardModels(value).get("Eng")
 				.get();
 
-		assertThat(card.getType()).isEqualTo("Eng");
+		assertThat(card.getName()).isEqualTo("Eng");
+		assertThat(card.getId()).isEqualTo("1483878594047");
 		assertThat(card.getFields()).containsExactly("English", "Definition");
 	}
 
@@ -65,7 +66,7 @@ public class EditPageParserTest {
 				.get("English -> German").get();
 
 		assertThat(deck.getName()).isEqualTo("English -> German");
-		assertThat(deck.getMid()).isEqualTo("1483783358744");
+		assertThat(deck.getDefaultMid()).isEqualTo("1483783358744");
 
 	}
 
@@ -77,7 +78,7 @@ public class EditPageParserTest {
 				.get("English -> German").get();
 
 		assertThat(deck.getName()).isEqualTo("English -> German");
-		assertThat(deck.getMid()).isEqualTo("1483783358744");
+		assertThat(deck.getDefaultMid()).isEqualTo("1483783358744");
 	}
 
 }

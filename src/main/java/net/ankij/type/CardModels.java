@@ -13,7 +13,7 @@ public final class CardModels {
 
 	public Optional<CardModel> get(String type) {
 		for (CardModel cardModel : cardModels) {
-			if (cardModel.getType().equals(type)) {
+			if (cardModel.getName().equals(type)) {
 				return Optional.of(cardModel);
 			}
 		}

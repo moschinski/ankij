@@ -23,7 +23,7 @@ final class DefaultAnkiWebClient implements AnkiWebClient {
 	}
 
 	@Override
-	public void add(AddEntryRequest request) throws IOException {
+	public void add(AddCardRequest request) throws IOException {
 		new EditPage(httpClient, pageValue).add(request);
 	}
 

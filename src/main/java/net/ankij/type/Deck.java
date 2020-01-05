@@ -5,19 +5,19 @@ import static java.util.Objects.requireNonNull;
 public final class Deck {
 
 	private final String name;
-	private final String mid;
+	private final String defaultMid;
 
-	public Deck(String name, String mid) {
+	public Deck(String name, String defaultMid) {
 		this.name = requireNonNull(name, "name");
-		this.mid = requireNonNull(mid, "mid");
+		this.defaultMid = defaultMid;
 	}
 
 	public String getName() {
 		return name;
 	}
 
-	public String getMid() {
-		return mid;
+	public String getDefaultMid() {
+		return defaultMid;
 	}
 
 }

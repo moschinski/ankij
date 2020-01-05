@@ -38,8 +38,7 @@ final class EditPageParser {
 	}
 
 	private CardModel parse(JrsValue value) {
-		JrsValue type = value.get("name");
-		Builder builder = CardModel.builder(type.asText());
+		Builder builder = CardModel.builder().name(value.get("name").asText()).id(value.get("id").asText());
 		JrsArray fields = (JrsArray) value.get("flds");
 		for (int i = 0; i < fields.size(); i++) {
 			JrsValue field = fields.get(i);
@@ -61,6 +60,7 @@ final class EditPageParser {
 			switch (jsonToken) {
 			case START_OBJECT:
 				deck = parser.getCurrentName() != null;
+				break;
 			case VALUE_STRING:
 				if ("mid".equals(parser.getCurrentName())) {
 					if (mid != null) {
@@ -75,13 +75,12 @@ final class EditPageParser {
 				}
 				break;
 			case END_OBJECT:
-				// the mid may be null for some decks
-				if (deck && mid != null) {
+				if (deck) {
 					decks.add(new Deck(name, mid));
+					name = null;
+					mid = null;
+					deck = false;
 				}
-				name = null;
-				mid = null;
-				deck = false;
 				break;
 			default:
 				break;
