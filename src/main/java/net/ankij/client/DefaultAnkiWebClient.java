@@ -7,6 +7,8 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.impl.client.CloseableHttpClient;
 
+import net.ankij.type.Card;
+
 @ParametersAreNonnullByDefault
 final class DefaultAnkiWebClient implements AnkiWebClient {
 
@@ -23,8 +25,8 @@ final class DefaultAnkiWebClient implements AnkiWebClient {
 	}
 
 	@Override
-	public void add(AddCardRequest request) throws IOException {
-		new EditPage(httpClient, pageValue).add(request);
+	public void addCard(Card card) throws IOException {
+		new EditPage(httpClient, pageValue).add(card);
 	}
 
 }

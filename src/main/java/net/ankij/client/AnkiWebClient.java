@@ -5,6 +5,8 @@ import java.util.NoSuchElementException;
 
 import org.apache.http.impl.client.HttpClients;
 
+import net.ankij.type.Card;
+
 public interface AnkiWebClient {
 
 	/**
@@ -34,6 +36,6 @@ public interface AnkiWebClient {
 	 * @throws NoSuchElementException
 	 *             if the given card type or deck does not exist
 	 */
-	void add(AddCardRequest request) throws IOException;
+	void addCard(Card request) throws IOException;
 
 }

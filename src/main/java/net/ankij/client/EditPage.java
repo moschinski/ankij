@@ -21,6 +21,7 @@ import org.apache.http.message.BasicHeader;
 import com.fasterxml.jackson.jr.ob.JSON;
 import com.fasterxml.jackson.jr.stree.JacksonJrsTreeCodec;
 
+import net.ankij.type.Card;
 import net.ankij.type.CardModel;
 import net.ankij.type.CardModels;
 import net.ankij.type.Deck;
@@ -46,7 +47,7 @@ final class EditPage {
 		this.parser = new EditPageParser(JSON.std.with(new JacksonJrsTreeCodec()));
 	}
 
-	void add(AddCardRequest request) throws ClientProtocolException, IOException {
+	void add(Card request) throws ClientProtocolException, IOException {
 		String editPage = httpClient.get(EDIT_PAGE_URL).response;
 		String csrfToken = pageValue.extractFrom(editPage, CSRF_TOKEN)
 				.orElseThrow(() -> new IOException("No CSRF token found"));
@@ -75,9 +76,9 @@ final class EditPage {
 		}
 	}
 
-	String createPayload(AddCardRequest request, CardModel cardModel) {
+	String createPayload(Card request, CardModel cardModel) {
 		List<String> fields = cardModel.getFields();
-		HashMap<String, Value> fieldMap = new HashMap<>(request.getFieldMap());
+		HashMap<String, Value> fieldMap = new HashMap<>(request.getFields());
 		String fieldPayload = fields.stream().map(fieldMap::remove).map(val -> val == null ? StringValue.EMPTY : val)
 				.map(Value::formatForWeb).collect(joining("\",\""));
 		if (!fieldMap.isEmpty()) {

@@ -1,4 +1,4 @@
-package net.ankij.client;
+package net.ankij.type;
 
 import static java.util.Collections.unmodifiableMap;
 import static java.util.Objects.requireNonNull;
@@ -8,40 +8,46 @@ import java.util.Map;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import net.ankij.type.StringValue;
-import net.ankij.type.Value;
-
 /**
- * Represents a request to add a card to an Anki deck
+ * Represents an Anki card
  */
-public final class AddCardRequest {
+public final class Card {
 
 	private final String deck;
 	private final String cardType;
 	private final Map<String, Value> fieldMap;
 
 	/**
-	 * @return a {@link Builder} that is used to create an {@link AddCardRequest}
+	 * @return a {@link Builder} that is used to create an {@link Card}
 	 */
 	public static Builder builder() {
 		return new Builder();
 	}
 
-	private AddCardRequest(String deck, String cardType, Map<String, Value> map) {
+	private Card(String deck, String cardType, Map<String, Value> map) {
 		this.deck = deck;
 		this.cardType = cardType;
 		this.fieldMap = unmodifiableMap(new HashMap<>(map));
 	}
 
+	/**
+	 * @return the name of the deck to which the card should be added
+	 */
 	public String getDeck() {
 		return deck;
 	}
 
+	/**
+	 * @return the type of the card which should be added (e.g., "Basic")
+	 */
 	public String getCardType() {
 		return cardType;
 	}
 
-	public Map<String, Value> getFieldMap() {
+	/**
+	 * @return the fields and their respective values
+	 */
+	public Map<String, Value> getFields() {
 		return fieldMap;
 	}
 
@@ -90,34 +96,20 @@ public final class AddCardRequest {
 		 *            the value of the field
 		 * @return {@code this} instance
 		 */
-		public Builder addField(String key, String value) {
-			fieldMap.put(key, new StringValue(value));
+		public Builder addField(String key, Object value) {
+			fieldMap.put(requireNonNull(key, "key"), new StringValue(value.toString()));
 			return this;
 		}
 
 		/**
-		 * Adds a field to the card
+		 * Creates an {@link Card}
 		 * 
-		 * @param key
-		 *            the name of the field
-		 * @param value
-		 *            the value of the field
-		 * @return {@code this} instance
+		 * @return a new {@link Card}
 		 */
-		public Builder addField(String key, Number value) {
-			fieldMap.put(key, new StringValue(value));
-			return this;
-		}
-
-		/**
-		 * Creates an {@link AddCardRequest}
-		 * 
-		 * @return a new {@link AddCardRequest}
-		 */
-		public AddCardRequest build() {
+		public Card build() {
 			requireNonNull(deck, "deck");
 			requireNonNull(cardType, "cardType");
-			return new AddCardRequest(deck, cardType, fieldMap);
+			return new Card(deck, cardType, fieldMap);
 		}
 	}
 }

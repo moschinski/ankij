@@ -1,7 +1,5 @@
 package net.ankij.type;
 
-import static net.ankij.client.Util.escapeForAnki;
-
 public final class StringValue implements Value {
 
 	public static final StringValue EMPTY = new StringValue("");
@@ -27,14 +25,14 @@ public final class StringValue implements Value {
 		}
 		String[] parts = string.split("\n");
 		if (parts.length == 1) {
-			return escapeForAnki(string);
+			return string;
 		}
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < parts.length; i++) {
 			if (i > 0) {
 				sb.append("<br>");
 			}
-			sb.append("<div>").append(escapeForAnki(parts[i])).append("</div>");
+			sb.append("<div>").append(parts[i]).append("</div>");
 		}
 		return sb.toString();
 	}

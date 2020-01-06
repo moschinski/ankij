@@ -6,6 +6,7 @@ import static org.apache.http.HttpStatus.SC_MOVED_TEMPORARILY;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -48,7 +49,7 @@ final class LoginPage {
 		// @formatter:on
 		HttpResponse response = httpClient.post(LOGIN_PAGE_URL,
 				asList(new BasicHeader("Content-Type", "application/x-www-form-urlencoded")),
-				new UrlEncodedFormEntity(body));
+				new UrlEncodedFormEntity(body, StandardCharsets.UTF_8));
 		if (response.statusCode != SC_MOVED_TEMPORARILY) {
 			throw new IOException("Failed to login; got following status code: " + response.statusCode);
 		}
