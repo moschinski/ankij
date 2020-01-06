@@ -1,5 +1,7 @@
 package net.ankij.type;
 
+import static java.util.Objects.requireNonNull;
+
 public final class StringValue implements Value {
 
 	public static final StringValue EMPTY = new StringValue("");
@@ -7,7 +9,7 @@ public final class StringValue implements Value {
 	private final String value;
 
 	public StringValue(String value) {
-		this.value = value;
+		this.value = requireNonNull(value, "value");
 	}
 
 	public StringValue(Number value) {
